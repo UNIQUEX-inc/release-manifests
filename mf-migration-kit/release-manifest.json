@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "release-manifest/v1",
+  "product": "mf-migration-kit",
+  "latest": "0.3.2",
+  "minimumSupported": "0.2.1",
+  "required": false,
+  "severity": "feature",
+  "summary": {
+    "ja": "共通の署名付き更新台帳に対応しました。期限付きの必須更新では書き込みを拒否し、読み取りと更新は続けられます。"
+  },
+  "publishedAt": "2026-10-13T13:11:24Z",
+  "rollback": {
+    "ja": "サポート範囲内の版（0.2.1 以上）へ戻せます。設定とログインは保持されます。",
+    "en": "You can roll back to a supported version (0.2.1 or later). Configuration and login are kept."
+  },
+  "update": {
+    "command": "npm install -g @kiyotakamatsushita/mf-migration-kit@0.3.2"
+  },
+  "afterUpdate": [],
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": "2026-10-09T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "初版: MFの取得・変換、ERP CLI、移行スキルをまとめた配布物です。"
+      }
+    },
+    {
+      "version": "0.1.1",
+      "publishedAt": "2026-10-11T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "未対応の科目が出たとき、AIはデータベースの修正を提案・質問せず、科目名と件数の一覧を出して止まります。 科目の対応は、会社ごとの account-map.txt に書き、人がレビューしてから使います。"
+      }
+    },
+    {
+      "version": "0.1.2",
+      "publishedAt": "2026-10-11T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "互換コマンド erp-catenas で、勘定科目の追加・名称変更（coa create / coa update）が使えます。"
+      }
+    },
+    {
+      "version": "0.1.3",
+      "publishedAt": "2026-10-11T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "移行スキルの手順（科目の追加）の文言を直しました。機能の変更はありません。"
+      }
+    },
+    {
+      "version": "0.2.0",
+      "publishedAt": "2026-10-11T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "会社を問わない汎用の配布物にしました。新しいコマンド erp-kit と会社設定（erp-kit config）を追加しました。 mf-kit fetch のMFプロファイルの既定値をなくし、スキルから会社名と会社固有の前提を外しました。erp-catenas は互換として残ります。"
+      }
+    },
+    {
+      "version": "0.2.1",
+      "publishedAt": "2026-10-11T00:00:00Z",
+      "severity": "security",
+      "summary": {
+        "ja": "安全装置の不具合の修正: --help を付けた書き込みコマンドが、テナントの照合を通らずに実行されていました。 保存したログインの期限が切れたとき、自動で更新してから実行します。"
+      }
+    },
+    {
+      "version": "0.3.0",
+      "publishedAt": "2026-10-13T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "新しい版が出たら、mf-kit・erp-kit が更新のお願いとお知らせを標準エラーに出します（mf-kit update で確認できます）。 未実現（入金予定）の仕訳を、承認待ちの下書きの起票用に出す mf-kit convert --include-unrealized を追加しました（既定は無効）。"
+      }
+    },
+    {
+      "version": "0.3.1",
+      "publishedAt": "2026-10-13T00:00:00Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "新しい版のお知らせの内容（必須の更新・変更点）を、GitHub Packages から読めない問題を直しました。0.3.1 以降で、『更新のお願い』が働きます。"
+      }
+    },
+    {
+      "version": "0.3.2",
+      "publishedAt": "2026-10-13T13:11:24Z",
+      "severity": "feature",
+      "summary": {
+        "ja": "共通の署名付き更新台帳に対応しました。期限付きの必須更新では書き込みを拒否し、読み取りと更新は続けられます。"
+      }
+    }
+  ],
+  "signature": {
+    "algorithm": "ed25519",
+    "keyId": "release-manifest-2026",
+    "signed": "manifest-sha256",
+    "value": "Z2+cXniDEnofRcfoBxVqFvf4Gc+6eLZ49VHXIdegfCm9LAbnZrSC62/AHHkIyV/OkeUOc5G3WBsDvJazXck4Cw=="
+  }
+}

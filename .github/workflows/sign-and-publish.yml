@@ -1,0 +1,115 @@
+name: Sign and publish release manifests
+
+# CHG-1248 (REQ-1234 段 2). Unsigned manifests are pushed to manifests/<product>/release-manifest.json. This workflow signs each
+# changed manifest with the Cloud KMS ed25519 key (Workload Identity Federation; the only role is roles/cloudkms.signer on that
+# one key), verifies the signature against the pinned public key in public-keys/, and commits the signed manifest to
+# <product>/release-manifest.json, which GitHub Pages serves at https://uniquex-inc.github.io/release-manifests/<product>/release-manifest.json.
+#
+# required:false  -> environment `auto-publish` (no reviewers): CI publishes on its own (specification 4.2).
+# required:true   -> environment `required-update` (required reviewers): a person approves before the signing job runs (4.2【決定】).
+#
+# Repository variables (none are secrets): GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT, KMS_KEY_VERSION, RELEASE_MANIFEST_KEY_ID.
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: "Product directory under manifests/ to sign and publish"
+        required: true
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "manifests/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sign-and-publish
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: list
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            products="${{ inputs.product }}"
+          else
+            products="$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- 'manifests/*/release-manifest.json' | awk -F/ '{print $2}' | sort -u || true)"
+          fi
+          matrix='[]'
+          for product in $products; do
+            [[ "$product" =~ ^[a-z0-9][a-z0-9._-]*$ ]] || { echo "invalid product name: $product" >&2; exit 1; }
+            file="manifests/$product/release-manifest.json"
+            [[ -f "$file" ]] || { echo "missing $file" >&2; exit 1; }
+            required="$(node -e 'const m=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); if (typeof m.required!=="boolean") process.exit(1); console.log(m.required)' "$file")"
+            matrix="$(jq -c --arg p "$product" --argjson r "$required" '. + [{product:$p, required:$r}]' <<<"$matrix")"
+          done
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "products: $matrix"
+
+  sign:
+    needs: detect
+    if: needs.detect.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    # required:true waits for the environment's required reviewers; required:false publishes without a person.
+    environment:
+      name: ${{ matrix.required && 'required-update' || 'auto-publish' }}
+      url: https://uniquex-inc.github.io/release-manifests/${{ matrix.product }}/release-manifest.json
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+      - name: Sign with Cloud KMS and verify against the pinned public key
+        env:
+          KMS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          node scripts/sign-manifest.mjs \
+            --input "manifests/${{ matrix.product }}/release-manifest.json" \
+            --output "${{ matrix.product }}/release-manifest.json" \
+            --key-version "${{ vars.KMS_KEY_VERSION }}" \
+            --key-id "${{ vars.RELEASE_MANIFEST_KEY_ID }}" \
+            --public-key "public-keys/${{ vars.RELEASE_MANIFEST_KEY_ID }}.pem"
+          node scripts/verify-manifest.mjs "${{ matrix.product }}/release-manifest.json"
+      - name: Commit the signed manifest
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${{ matrix.product }}/release-manifest.json"
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          latest="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).latest)' "${{ matrix.product }}/release-manifest.json")"
+          git commit -m "publish: ${{ matrix.product }} ${latest} (required=${{ matrix.required }}, run ${{ github.run_id }})"
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -1,0 +1,24 @@
+name: required
+
+# CHG-1300: PR check. Structure of every manifest (manifests/<product>/ input and published <product>/ files) plus the signature of
+# published files against public-keys/. It never signs and has no cloud credentials; signing stays in sign-and-publish.yml.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  required:
+    name: required
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: check manifests
+        run: node scripts/check-manifest.mjs
+      - name: tests
+        run: node --test tests/check-manifest.test.mjs

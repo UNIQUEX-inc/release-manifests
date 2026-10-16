@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "release-manifest/v1",
+  "product": "service-console",
+  "latest": "1.0.0",
+  "minimumSupported": "1.0.0",
+  "required": false,
+  "severity": "feature",
+  "summary": {
+    "ja": "運用コンソールの最初の版です。更新の通知（台帳の確認）に対応しました。",
+    "en": "The first release of the operations console, with update notifications (release manifest checks)."
+  },
+  "publishedAt": "2026-10-16T06:09:26Z",
+  "rollback": {
+    "ja": "サポート範囲内の版（1.0.0 以上）へ戻せます。戻すときは前の版の image で harness の plan と apply を行います。",
+    "en": "You can roll back to a supported version (1.0.0 or later) by running the harness plan and apply with the previous image."
+  },
+  "update": {
+    "command": "harness plan <environment> && harness deploy <environment>"
+  }
+}

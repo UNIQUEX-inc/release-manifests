@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "release-manifest/v1",
+  "product": "feedback-web",
+  "latest": "0.1.9",
+  "minimumSupported": "0.1.7",
+  "required": false,
+  "severity": "feature",
+  "summary": {
+    "ja": "記事内の画像・図の差し替え候補（対象を指す・画像の添付）を送れるようになりました。",
+    "en": "You can now point at an image or diagram in an article and attach a replacement candidate."
+  },
+  "publishedAt": "2026-10-16T06:09:26Z",
+  "rollback": {
+    "ja": "サポート範囲内の版（0.1.7 以上）へ戻せます。0.1.7 から送信時に SDK の版を申告します。",
+    "en": "You can roll back to a supported version (0.1.7 or later). SDK versions are reported from 0.1.7."
+  }
+}
